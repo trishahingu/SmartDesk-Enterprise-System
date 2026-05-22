@@ -2,103 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Task;
 use App\Models\Project;
 use App\Models\User;
-use App\Notifications\TaskAssignedNotification;
-
+use App\Models\ActivityLog;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TaskAssignedMail;
 class TaskController extends Controller
 {
     /**
      * Display task list
      */
-    public function index(Request $request)
-{
-    $query = Task::query();
 
-    // Search by title
+    public function index()
+    {
+        $tasks = Task::latest()->get();
 
-    if ($request->search) {
-
-        $query->where('title', 'LIKE', '%' . $request->search . '%');
+        return view(
+            'tasks.index',
+            compact('tasks')
+        );
     }
-
-    // Filter by status
-
-    if ($request->status) {
-
-        $query->where('status', $request->status);
-    }
-
-    // Filter by priority
-
-    if ($request->priority) {
-
-        $query->where('priority', $request->priority);
-    }
-
-    $tasks = $query->get();
-
-    return view('tasks.index', compact('tasks'));
-}
 
     /**
      * Show create form
      */
+
     public function create()
     {
         $projects = Project::all();
 
         $users = User::all();
 
-        return view('tasks.create', compact('projects', 'users'));
+        return view(
+            'tasks.create',
+            compact(
+                'projects',
+                'users'
+            )
+        );
     }
 
     /**
      * Store new task
      */
+
     public function store(Request $request)
     {
-        $request->validate([
-
-            'title' => 'required',
-
-            'description' => 'required',
-
-            'project_id' => 'required',
-
-            'assigned_to' => 'required',
-
-            'status' => 'required',
-
-            'priority' => 'required',
-
-            'deadline' => 'required',
-
-            'attachment' => 'nullable|mimes:pdf,docx,jpg,jpeg,png,zip|max:2048'
-
-        ]);
-
-        // File Upload
-
-        if ($request->hasFile('attachment')) {
-
-            $file = $request->file('attachment');
-
-            $filename = time() . '_' . $file->getClientOriginalName();
-
-            $file->move(public_path('uploads'), $filename);
-
-            $attachment = $filename;
-
-        } else {
-
-            $attachment = null;
-        }
-
-        // Create Task
-
         $task = Task::create([
 
             'title' => $request->title,
@@ -115,72 +66,64 @@ class TaskController extends Controller
 
             'deadline' => $request->deadline,
 
-            'attachment' => $attachment
+            'attachment' => $request->hasFile('attachment')
+                ? $request->file('attachment')
+                    ->store('attachments', 'public')
+                : null
+
+                
+        ]);
+        $user = User::find($request->assigned_to);
+
+Mail::to($user->email)
+    ->send(new TaskAssignedMail($task));
+        /*
+        |--------------------------------------------------------------------------
+        | Activity Log
+        |--------------------------------------------------------------------------
+        */
+
+        ActivityLog::create([
+
+            'user_id' => auth()->id(),
+
+            'activity' => 'Created Task: ' . $task->title
 
         ]);
 
-        // Send Notification
-
-        $user = User::find($request->assigned_to);
-
-        if ($user) {
-
-            $user->notify(new TaskAssignedNotification($task));
-        }
-
-        return redirect()->route('tasks.index')
-                         ->with('success', 'Task Created Successfully');
+        return redirect('/tasks')
+            ->with('success', 'Task Created Successfully');
     }
 
     /**
-     * Show edit form
+     * Edit task
      */
-    public function edit(Task $task)
+
+    public function edit($id)
     {
+        $task = Task::findOrFail($id);
+
         $projects = Project::all();
 
         $users = User::all();
 
-        return view('tasks.edit', compact('task', 'projects', 'users'));
+        return view(
+            'tasks.edit',
+            compact(
+                'task',
+                'projects',
+                'users'
+            )
+        );
     }
 
     /**
      * Update task
      */
-    public function update(Request $request, Task $task)
+
+    public function update(Request $request, $id)
     {
-        $request->validate([
-
-            'title' => 'required',
-
-            'description' => 'required',
-
-            'project_id' => 'required',
-
-            'assigned_to' => 'required',
-
-            'status' => 'required',
-
-            'priority' => 'required',
-
-            'deadline' => 'required'
-
-        ]);
-
-        // File Upload
-
-        if ($request->hasFile('attachment')) {
-
-            $file = $request->file('attachment');
-
-            $filename = time() . '_' . $file->getClientOriginalName();
-
-            $file->move(public_path('uploads'), $filename);
-
-            $task->attachment = $filename;
-        }
-
-        // Update Task
+        $task = Task::findOrFail($id);
 
         $task->update([
 
@@ -200,18 +143,49 @@ class TaskController extends Controller
 
         ]);
 
-        return redirect()->route('tasks.index')
-                         ->with('success', 'Task Updated Successfully');
+        /*
+        |--------------------------------------------------------------------------
+        | Activity Log
+        |--------------------------------------------------------------------------
+        */
+
+        ActivityLog::create([
+
+            'user_id' => auth()->id(),
+
+            'activity' => 'Updated Task: ' . $task->title
+
+        ]);
+
+        return redirect('/tasks')
+            ->with('success', 'Task Updated Successfully');
     }
 
     /**
      * Delete task
      */
-    public function destroy(Task $task)
+
+    public function destroy($id)
     {
+        $task = Task::findOrFail($id);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Activity Log
+        |--------------------------------------------------------------------------
+        */
+
+        ActivityLog::create([
+
+            'user_id' => auth()->id(),
+
+            'activity' => 'Deleted Task: ' . $task->title
+
+        ]);
+
         $task->delete();
 
-        return redirect()->route('tasks.index')
-                         ->with('success', 'Task Deleted Successfully');
+        return redirect('/tasks')
+            ->with('success', 'Task Deleted Successfully');
     }
 }

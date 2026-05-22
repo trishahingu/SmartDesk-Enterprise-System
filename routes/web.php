@@ -7,7 +7,12 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
-
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\TimesheetController;
+use App\Http\Controllers\BackupController;
+use App\Http\Controllers\EventController;
 use App\Models\Employee;
 use App\Models\User;
 
@@ -36,7 +41,32 @@ Route::get('/dashboard', function () {
     $totalUsers = \App\Models\User::count();
 
     $totalTasks = \App\Models\Task::count();
+    
+$presentToday = \App\Models\Attendance::where(
+    'status',
+    'Present'
+)->whereDate(
+    'attendance_date',
+    today()
+)->count();
 
+$absentToday = \App\Models\Attendance::where(
+    'status',
+    'Absent'
+)->whereDate(
+    'attendance_date',
+    today()
+)->count();
+
+$halfDayToday = \App\Models\Attendance::where(
+    'status',
+    'Half-Day'
+)->whereDate(
+    'attendance_date',
+    today()
+)->count();
+
+$totalAttendance = \App\Models\Attendance::count();
     $completedTasks = \App\Models\Task::where(
         'status',
         'Completed'
@@ -56,7 +86,11 @@ Route::get('/dashboard', function () {
         'totalTasks',
         'completedTasks',
         'progress',
-        'notifications'
+        'notifications',
+        'presentToday',
+        'absentToday',
+        'halfDayToday',
+        'totalAttendance'
 
     ));
 
@@ -68,7 +102,10 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::resource('projects', ProjectController::class);
+Route::resource(
+    'projects',
+    ProjectController::class
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -88,7 +125,10 @@ Route::get('/tasks/excel',
 |--------------------------------------------------------------------------
 */
 
-Route::resource('tasks', TaskController::class);
+Route::resource(
+    'tasks',
+    TaskController::class
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -96,7 +136,52 @@ Route::resource('tasks', TaskController::class);
 |--------------------------------------------------------------------------
 */
 
-Route::resource('employees', EmployeeController::class);
+Route::resource(
+    'employees',
+    EmployeeController::class
+);
+
+/*
+|--------------------------------------------------------------------------
+| Attendance Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::resource(
+        'attendance',
+        AttendanceController::class
+    );
+Route::resource(
+    'leave-requests',
+    LeaveRequestController::class
+);
+Route::resource(
+    'timesheets',
+    TimesheetController::class
+);
+Route::get(
+    '/leave-requests/{id}/approve',
+    [LeaveRequestController::class, 'approve']
+);
+Route::get(
+    '/backup/database',
+    [BackupController::class, 'backup']
+);
+Route::resource(
+    'events',
+    EventController::class
+);
+Route::get(
+    '/leave-requests/{id}/reject',
+    [LeaveRequestController::class, 'reject']
+);
+Route::get(
+    '/activity-logs',
+    [ActivityLogController::class, 'index']
+);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -106,17 +191,21 @@ Route::resource('employees', EmployeeController::class);
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/profile',
-        [ProfileController::class, 'edit'])
-        ->name('profile.edit');
+    Route::get(
+        '/profile',
+        [ProfileController::class, 'edit']
+    )->name('profile.edit');
 
-    Route::patch('/profile',
-        [ProfileController::class, 'update'])
-        ->name('profile.update');
+    Route::patch(
+        '/profile',
+        [ProfileController::class, 'update']
+    )->name('profile.update');
 
-    Route::delete('/profile',
-        [ProfileController::class, 'destroy'])
-        ->name('profile.destroy');
+    Route::delete(
+        '/profile',
+        [ProfileController::class, 'destroy']
+    )->name('profile.destroy');
+
 });
 
 require __DIR__.'/auth.php';
