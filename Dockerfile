@@ -26,7 +26,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN composer install
+RUN composer install --ignore-platform-reqs
 
 EXPOSE 10000
 
