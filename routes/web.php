@@ -15,6 +15,11 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\EventController;
 use App\Models\Employee;
 use App\Models\User;
+use App\Http\Controllers\CompanyController;
+
+Route::get('/companies', [CompanyController::class, 'index']);
+Route::get('/companies/create', [CompanyController::class, 'create']);
+Route::post('/companies', [CompanyController::class, 'store']);
 
 /*
 |--------------------------------------------------------------------------
@@ -182,7 +187,13 @@ Route::get(
     [ActivityLogController::class, 'index']
 );
 });
+Route::middleware(['auth'])->group(function () {
 
+    Route::get('/companies', [CompanyController::class, 'index']);
+    Route::get('/companies/create', [CompanyController::class, 'create']);
+    Route::post('/companies', [CompanyController::class, 'store']);
+
+});
 /*
 |--------------------------------------------------------------------------
 | Profile Routes
