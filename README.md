@@ -62,3 +62,4 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 # SmartDesk-Enterprise-System
 SmartDesk is an enterprise workforce management system built with Laravel. It includes employee management, project tracking, task management, attendance, leave requests, timesheets, activity logs, email notifications, reports, backup system, REST APIs, and dashboard analytics.
 >>>>>>> 30807a7cc6b19f145abbe8c2fa790f8d83239ee2
+CI/CD Test
