@@ -25,7 +25,8 @@ jobs:
       run: composer install --no-interaction
 
     - name: Copy Environment
-      run: cp .env.example .env
+  run: |
+    if [ -f .env.example ]; then cp .env.example .env; fi
 
     - name: Generate Key
       run: php artisan key:generate
