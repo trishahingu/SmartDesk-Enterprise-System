@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\User;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Hash;
 class CompanyController extends Controller
 {
     public function index()
@@ -20,21 +21,33 @@ class CompanyController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email'
-        ]);
+{
+    $request->validate([
+        'name' => 'required',
+        'email' => 'required|email',
+        'admin_name' => 'required',
+        'admin_email' => 'required|email|unique:users,email',
+        'password' => 'required|min:6'
+    ]);
 
-        Company::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'subscription_plan' => 'Free'
-        ]);
+    $company = Company::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'phone' => $request->phone,
+        'address' => $request->address,
+        'subscription_plan' => 'Free'
+    ]);
 
-        return redirect('/companies')
-            ->with('success', 'Company created successfully');
-    }
+    User::create([
+        'company_id' => $company->id,
+        'name' => $request->admin_name,
+        'email' => $request->admin_email,
+        'password' => Hash::make($request->password)
+    ]);
+
+    return redirect('/companies')
+        ->with('success', 'Company & Admin Created Successfully');
+
+      
+}
 }

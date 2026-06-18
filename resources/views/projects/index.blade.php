@@ -8,34 +8,34 @@
 
     <a href="{{ route('projects.create') }}"
        class="btn btn-primary mb-3">
-
-       Add Project
-
+        Add Project
     </a>
 
     <table class="table table-bordered">
 
         <tr>
-
             <th>ID</th>
             <th>Title</th>
             <th>Description</th>
-
         </tr>
 
-        @foreach($projects as $project)
+        @forelse($projects as $project)
 
         <tr>
-
             <td>{{ $project->id }}</td>
-
             <td>{{ $project->title }}</td>
-
             <td>{{ $project->description }}</td>
-
         </tr>
 
-        @endforeach
+        @empty
+
+        <tr>
+            <td colspan="3" class="text-center">
+                No Projects Found
+            </td>
+        </tr>
+
+        @endforelse
 
     </table>
 

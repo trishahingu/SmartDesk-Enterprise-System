@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\EmployeeController;
@@ -16,11 +16,29 @@ use App\Http\Controllers\EventController;
 use App\Models\Employee;
 use App\Models\User;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AiController;
+use App\Http\Controllers\PaymentController;
 
+Route::get('/payment', [PaymentController::class, 'index']);
+Route::post('/payment/success', [PaymentController::class, 'success']);
 Route::get('/companies', [CompanyController::class, 'index']);
 Route::get('/companies/create', [CompanyController::class, 'create']);
 Route::post('/companies', [CompanyController::class, 'store']);
 
+Route::get(
+    '/invoices',
+    [InvoiceController::class, 'index']
+)->middleware(['auth']);
+
+Route::get(
+    '/invoices/generate',
+    [InvoiceController::class, 'generate']
+)->middleware(['auth']);
+Route::get('/subscriptions', [SubscriptionController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('subscriptions.index');
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -38,69 +56,15 @@ Route::get('/', function () {
 | Dashboard
 |--------------------------------------------------------------------------
 */
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/dashboard', function () {
-
-    $totalEmployees = \App\Models\Employee::count();
-
-    $totalUsers = \App\Models\User::count();
-
-    $totalTasks = \App\Models\Task::count();
-    
-$presentToday = \App\Models\Attendance::where(
-    'status',
-    'Present'
-)->whereDate(
-    'attendance_date',
-    today()
-)->count();
-
-$absentToday = \App\Models\Attendance::where(
-    'status',
-    'Absent'
-)->whereDate(
-    'attendance_date',
-    today()
-)->count();
-
-$halfDayToday = \App\Models\Attendance::where(
-    'status',
-    'Half-Day'
-)->whereDate(
-    'attendance_date',
-    today()
-)->count();
-
-$totalAttendance = \App\Models\Attendance::count();
-    $completedTasks = \App\Models\Task::where(
-        'status',
-        'Completed'
-    )->count();
-
-    $progress = $totalTasks > 0
-        ? ($completedTasks / $totalTasks) * 100
-        : 0;
-
-    $notifications = auth()->user()
-        ->notifications;
-
-    return view('dashboard', compact(
-
-        'totalEmployees',
-        'totalUsers',
-        'totalTasks',
-        'completedTasks',
-        'progress',
-        'notifications',
-        'presentToday',
-        'absentToday',
-        'halfDayToday',
-        'totalAttendance'
-
-    ));
-
-})->middleware(['auth'])->name('dashboard');
-
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('dashboard');
 /*
 |--------------------------------------------------------------------------
 | Project Routes
@@ -179,6 +143,10 @@ Route::resource(
     EventController::class
 );
 Route::get(
+    '/subscriptions/upgrade/{plan}',
+    [SubscriptionController::class, 'upgrade']
+)->middleware(['auth']);
+Route::get(
     '/leave-requests/{id}/reject',
     [LeaveRequestController::class, 'reject']
 );
@@ -194,6 +162,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/companies', [CompanyController::class, 'store']);
 
 });
+Route::middleware(['auth'])->group(function () {
+
+    Route::get(
+        '/ai-assistant',
+        [AiController::class, 'index']
+    );
+
+});
+Route::get(
+    '/invoice/pdf/{id}',
+    [App\Http\Controllers\InvoiceController::class, 'downloadPdf']
+);
 /*
 |--------------------------------------------------------------------------
 | Profile Routes

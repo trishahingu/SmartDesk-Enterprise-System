@@ -5,109 +5,102 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class TaskApiController extends Controller
 {
-    // GET ALL TASKS
-
     public function index()
     {
-        $tasks = Task::all();
-
         return response()->json([
-
             'success' => true,
-
-            'message' => 'Task List',
-
-            'data' => $tasks
-
-        ]);
+            'message' => 'Tasks Retrieved Successfully',
+            'data' => Task::all()
+        ], 200);
     }
-
-    // STORE TASK
 
     public function store(Request $request)
     {
-        $task = Task::create([
+        $validator = Validator::make($request->all(), [
 
-            'title' => $request->title,
-
-            'description' => $request->description,
-
-            'project_id' => $request->project_id,
-
-            'assigned_to' => $request->assigned_to,
-
-            'status' => $request->status,
-
-            'priority' => $request->priority,
-
-            'deadline' => $request->deadline
+            'title' => 'required',
+            'description' => 'required'
 
         ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $task = Task::create($request->all());
 
         return response()->json([
-
             'success' => true,
-
-            'message' => 'Task Created',
-
+            'message' => 'Task Created Successfully',
             'data' => $task
-
-        ]);
+        ], 201);
     }
-
-    // SHOW SINGLE TASK
 
     public function show($id)
     {
         $task = Task::find($id);
 
+        if (!$task) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Task Not Found'
+            ], 404);
+        }
+
         return response()->json([
-
             'success' => true,
-
-            'message' => 'Single Task',
-
             'data' => $task
-
-        ]);
+        ], 200);
     }
-
-    // UPDATE TASK
 
     public function update(Request $request, $id)
     {
         $task = Task::find($id);
 
+        if (!$task) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Task Not Found'
+            ], 404);
+        }
+
         $task->update($request->all());
 
         return response()->json([
-
             'success' => true,
-
-            'message' => 'Task Updated',
-
+            'message' => 'Task Updated Successfully',
             'data' => $task
-
-        ]);
+        ], 200);
     }
-
-    // DELETE TASK
 
     public function destroy($id)
     {
         $task = Task::find($id);
 
+        if (!$task) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Task Not Found'
+            ], 404);
+        }
+
         $task->delete();
 
         return response()->json([
-
             'success' => true,
-
-            'message' => 'Task Deleted'
-
-        ]);
+            'message' => 'Task Deleted Successfully'
+        ], 200);
     }
 }

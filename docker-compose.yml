@@ -1,0 +1,26 @@
+services:
+
+  app:
+    build: .
+    container_name: smartdesk_app
+    ports:
+      - "8000:10000"
+    depends_on:
+      - mysql
+      - redis
+
+  mysql:
+    image: mysql:8
+    container_name: smartdesk_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: smartdesk
+    ports:
+      - "3307:3306"
+
+  redis:
+    image: redis:latest
+    container_name: smartdesk_redis
+    ports:
+      - "6379:6379"

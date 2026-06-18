@@ -9,21 +9,26 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TaskAssignedMail;
+use App\Jobs\SendTaskAssignedEmail;
+use Illuminate\Support\Facades\DB;
 class TaskController extends Controller
 {
     /**
      * Display task list
      */
 
-    public function index()
-    {
-        $tasks = Task::latest()->get();
+  public function index()
+{
+    $tasks = Task::where(
+        'company_id',
+        auth()->user()->company_id
+    )->latest()->get();
 
-        return view(
-            'tasks.index',
-            compact('tasks')
-        );
-    }
+    return view(
+        'tasks.index',
+        compact('tasks')
+    );
+}
 
     /**
      * Show create form
@@ -31,10 +36,15 @@ class TaskController extends Controller
 
     public function create()
     {
-        $projects = Project::all();
+    $projects = Project::where(
+    'company_id',
+    auth()->user()->company_id
+)->get();
 
-        $users = User::all();
-
+$users = User::where(
+    'company_id',
+    auth()->user()->company_id
+)->get();
         return view(
             'tasks.create',
             compact(
@@ -52,32 +62,47 @@ class TaskController extends Controller
     {
         $task = Task::create([
 
-            'title' => $request->title,
+    'company_id' => auth()->user()->company_id,
 
-            'description' => $request->description,
+    'title' => $request->title,
 
-            'project_id' => $request->project_id,
+    'description' => $request->description,
 
-            'assigned_to' => $request->assigned_to,
+    'project_id' => $request->project_id,
 
-            'status' => $request->status,
+    'assigned_to' => $request->assigned_to,
 
-            'priority' => $request->priority,
+    'status' => $request->status,
 
-            'deadline' => $request->deadline,
+    'priority' => $request->priority,
 
-            'attachment' => $request->hasFile('attachment')
-                ? $request->file('attachment')
-                    ->store('attachments', 'public')
-                : null
+    'deadline' => $request->deadline,
 
-                
-        ]);
+    'attachment' => $request->hasFile('attachment')
+        ? $request->file('attachment')
+            ->store('attachments', 'public')
+        : null
+]);
+
+                 
         $user = User::find($request->assigned_to);
 
-Mail::to($user->email)
-    ->send(new TaskAssignedMail($task));
-        /*
+        DB::table('jobs')->insert([
+    'queue' => 'default',
+    'payload' => 'test',
+    'attempts' => 0,
+    'reserved_at' => null,
+    'available_at' => time(),
+    'created_at' => time(),
+]);
+    
+
+SendTaskAssignedEmail::dispatch(
+    $task,
+    $user->email
+);
+
+dd('After Dispatch');     /*
         |--------------------------------------------------------------------------
         | Activity Log
         |--------------------------------------------------------------------------
@@ -103,10 +128,15 @@ Mail::to($user->email)
     {
         $task = Task::findOrFail($id);
 
-        $projects = Project::all();
+        $projects = Project::where(
+    'company_id',
+    auth()->user()->company_id
+)->get();
 
-        $users = User::all();
-
+$users = User::where(
+    'company_id',
+    auth()->user()->company_id
+)->get();
         return view(
             'tasks.edit',
             compact(
