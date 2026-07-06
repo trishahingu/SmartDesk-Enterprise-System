@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\ActivityLog;
+use App\Events\ProjectCreated;
 use Illuminate\Support\Facades\Auth;
 
 class ProjectService
@@ -38,15 +39,20 @@ class ProjectService
             'title' => $data['title'],
             'description' => $data['description'],
         ]);
+        $project = Project::create([
+    'company_id' => Auth::user()->company_id,
+    'title' => $data['title'],
+    'description' => $data['description'],
+]);
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'Created Project: ' . $project->title,
-        ]);
-    event(new \App\Events\ProjectCreated($project));
-        return [
-            'status' => true,
-            'project' => $project,
-        ];
+event(new ProjectCreated($project));
+
+return [
+    'status' => true,
+    'project' => $project,
+];
+       
+    
+        
     }
 }

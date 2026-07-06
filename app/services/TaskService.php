@@ -3,18 +3,19 @@
 namespace App\Services;
 
 use App\Models\Task;
-use App\Models\User;
 use App\Models\ActivityLog;
-use App\Jobs\SendTaskAssignedEmail;
+use App\Events\TaskCreated;
 use App\Services\NotificationService;
+
 class TaskService
-{   
+{
     protected $notificationService;
 
-public function __construct(NotificationService $notificationService)
-{
-    $this->notificationService = $notificationService;
-}
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function getTasks($companyId)
     {
         return Task::where('company_id', $companyId)
@@ -36,38 +37,37 @@ public function __construct(NotificationService $notificationService)
             'attachment' => $data['attachment'] ?? null,
         ]);
 
-        $this->notificationService
-    ->sendTaskAssignmentNotification(
-        $task,
-        $data['assigned_to']
-    );
+        // Fire Event
+        event(new TaskCreated($task));
+
+        // Send Notification
+        $this->notificationService->sendTaskAssignmentNotification(
+            $task,
+            $data['assigned_to']
+        );
+
+        return $task;
+    }
+
+    public function updateTask(Task $task, array $data)
+    {
+        $task->update($data);
 
         ActivityLog::create([
             'user_id' => auth()->id(),
-            'activity' => 'Created Task: ' . $task->title,
+            'activity' => 'Updated Task: ' . $task->title,
         ]);
 
         return $task;
     }
-    public function updateTask(Task $task, array $data)
-{
-    $task->update($data);
 
-    ActivityLog::create([
-        'user_id' => auth()->id(),
-        'activity' => 'Updated Task: ' . $task->title,
-    ]);
+    public function deleteTask(Task $task)
+    {
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'Deleted Task: ' . $task->title,
+        ]);
 
-    return $task;
-}
-
-public function deleteTask(Task $task)
-{
-    ActivityLog::create([
-        'user_id' => auth()->id(),
-        'activity' => 'Deleted Task: ' . $task->title,
-    ]);
-
-    $task->delete();
-}
+        $task->delete();
+    }
 }

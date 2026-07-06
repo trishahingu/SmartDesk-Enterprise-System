@@ -3,13 +3,15 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Event;
 
 use App\Events\ProjectCreated;
+use App\Events\TaskCreated;
 use App\Events\NotificationSent;
 
 use App\Listeners\UpdateProjectStatus;
+use App\Listeners\LogTaskCreated;
 use App\Listeners\SendNotification;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,6 +36,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             ProjectCreated::class,
             UpdateProjectStatus::class
+        );
+
+        Event::listen(
+            TaskCreated::class,
+            LogTaskCreated::class
         );
 
         Event::listen(
