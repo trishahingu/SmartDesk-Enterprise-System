@@ -10,24 +10,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TaskAssignedMail;
 use App\Jobs\SendTaskAssignedEmail;
+use App\Services\TaskService;
 use Illuminate\Support\Facades\DB;
 class TaskController extends Controller
 {
+    protected $taskService;
+
+    public function __construct(TaskService $taskService)
+    {
+        $this->taskService = $taskService;
+    }
+
     /**
      * Display task list
      */
 
-  public function index()
+ 
+    public function index()
 {
-    $tasks = Task::where(
-        'company_id',
+    $tasks = $this->taskService->getTasks(
         auth()->user()->company_id
-    )->latest()->get();
-
-    return view(
-        'tasks.index',
-        compact('tasks')
     );
+
+    return view('tasks.index', compact('tasks'));
 }
 
     /**
@@ -59,66 +64,28 @@ $users = User::where(
      */
 
     public function store(Request $request)
-    {
-        $task = Task::create([
+{
+    $attachment = null;
 
-    'company_id' => auth()->user()->company_id,
-
-    'title' => $request->title,
-
-    'description' => $request->description,
-
-    'project_id' => $request->project_id,
-
-    'assigned_to' => $request->assigned_to,
-
-    'status' => $request->status,
-
-    'priority' => $request->priority,
-
-    'deadline' => $request->deadline,
-
-    'attachment' => $request->hasFile('attachment')
-        ? $request->file('attachment')
-            ->store('attachments', 'public')
-        : null
-]);
-
-                 
-        $user = User::find($request->assigned_to);
-
-        DB::table('jobs')->insert([
-    'queue' => 'default',
-    'payload' => 'test',
-    'attempts' => 0,
-    'reserved_at' => null,
-    'available_at' => time(),
-    'created_at' => time(),
-]);
-    
-
-SendTaskAssignedEmail::dispatch(
-    $task,
-    $user->email
-);
-
-dd('After Dispatch');     /*
-        |--------------------------------------------------------------------------
-        | Activity Log
-        |--------------------------------------------------------------------------
-        */
-
-        ActivityLog::create([
-
-            'user_id' => auth()->id(),
-
-            'activity' => 'Created Task: ' . $task->title
-
-        ]);
-
-        return redirect('/tasks')
-            ->with('success', 'Task Created Successfully');
+    if ($request->hasFile('attachment')) {
+        $attachment = $request->file('attachment')
+            ->store('attachments', 'public');
     }
+
+    $this->taskService->createTask([
+        'title' => $request->title,
+        'description' => $request->description,
+        'project_id' => $request->project_id,
+        'assigned_to' => $request->assigned_to,
+        'status' => $request->status,
+        'priority' => $request->priority,
+        'deadline' => $request->deadline,
+        'attachment' => $attachment,
+    ], auth()->user()->company_id);
+
+    return redirect('/tasks')
+        ->with('success', 'Task Created Successfully');
+}
 
     /**
      * Edit task
@@ -152,70 +119,36 @@ $users = User::where(
      */
 
     public function update(Request $request, $id)
-    {
-        $task = Task::findOrFail($id);
+{
+    $task = Task::findOrFail($id);
 
-        $task->update([
+    $this->taskService->updateTask(
+        $task,
+        $request->only([
+            'title',
+            'description',
+            'project_id',
+            'assigned_to',
+            'status',
+            'priority',
+            'deadline'
+        ])
+    );
 
-            'title' => $request->title,
-
-            'description' => $request->description,
-
-            'project_id' => $request->project_id,
-
-            'assigned_to' => $request->assigned_to,
-
-            'status' => $request->status,
-
-            'priority' => $request->priority,
-
-            'deadline' => $request->deadline
-
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Activity Log
-        |--------------------------------------------------------------------------
-        */
-
-        ActivityLog::create([
-
-            'user_id' => auth()->id(),
-
-            'activity' => 'Updated Task: ' . $task->title
-
-        ]);
-
-        return redirect('/tasks')
-            ->with('success', 'Task Updated Successfully');
-    }
-
+    return redirect('/tasks')
+        ->with('success', 'Task Updated Successfully');
+}
     /**
      * Delete task
      */
 
-    public function destroy($id)
-    {
-        $task = Task::findOrFail($id);
+ public function destroy($id)
+{
+    $task = Task::findOrFail($id);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Activity Log
-        |--------------------------------------------------------------------------
-        */
+    $this->taskService->deleteTask($task);
 
-        ActivityLog::create([
-
-            'user_id' => auth()->id(),
-
-            'activity' => 'Deleted Task: ' . $task->title
-
-        ]);
-
-        $task->delete();
-
-        return redirect('/tasks')
-            ->with('success', 'Task Deleted Successfully');
-    }
+    return redirect('/tasks')
+        ->with('success', 'Task Deleted Successfully');
+}
 }

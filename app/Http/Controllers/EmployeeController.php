@@ -1,34 +1,45 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Services\BillingService;
 use App\Models\Employee;
 use App\Models\Company;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Services\EmployeeService;
 use App\Models\ActivityLog;
 
 class EmployeeController extends Controller
 {
+    protected $billingService;
+
+public function __construct(
+    EmployeeService $employeeService,
+    BillingService $billingService
+) {
+    $this->employeeService = $employeeService;
+    $this->billingService = $billingService;
+}
+    protected $employeeService;
+
+    
     /**
      * Display a listing of the resource.
      */
-  public function index(Request $request)
+public function index(Request $request)
 {
-    $search = $request->search;
+    $employees = $this->employeeService->getEmployees(
+        $request->search
+    );
+    $company = Company::find(Auth::user()->company_id);
 
-  $employees = Employee::where(
-        'company_id',
-        auth()->user()->company_id
-    )
-    ->where(function ($query) use ($search) {
+if (!$this->billingService->canCreateEmployee($company)) {
+    return redirect()->back()->with(
+        'error',
+        'Employee limit reached. Please upgrade your plan.'
+    );
+}
 
-        $query->where('name', 'LIKE', "%$search%")
-              ->orWhere('email', 'LIKE', "%$search%")
-              ->orWhere('department', 'LIKE', "%$search%");
-
-    })
-    ->paginate(5);
     return view('employees.index', compact('employees'));
 }
     /**
@@ -43,47 +54,22 @@ class EmployeeController extends Controller
     
 public function store(Request $request)
 {
-    $request->validate([
-        'name' => 'required|min:3',
-        'email' => 'required|email',
-        'phone' => 'required|numeric|digits:10',
-        'department' => 'required'
-    ]);
+    $result = $this->employeeService->createEmployee(
+    $request->only(
+        'name',
+        'email',
+        'phone',
+        'department'
+    )
+);
 
-    $company = Company::find(
-        Auth::user()->company_id
-    );
-
-    $employeeCount = Employee::where(
-        'company_id',
-        Auth::user()->company_id
-    )->count();
-
-    if ($company && $employeeCount >= $company->max_users) {
-
-        return redirect()
-            ->back()
-            ->with(
-                'error',
-                'Employee limit reached. Please upgrade your plan.'
-            );
-    }
-
-    Employee::create([
-        'company_id' => Auth::user()->company_id,
-        'name' => $request->name,
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'department' => $request->department,
-    ]);
-ActivityLog::create([
-    'user_id' => auth()->id(),
-    'activity' => 'Created Employee: ' . $request->name
-]);
-    return redirect('/employees')
-        ->with('success', 'Employee added successfully');
+if (!$result['status']) {
+    return redirect()->back()->with('error', $result['message']);
 }
 
+return redirect('/employees')
+    ->with('success', 'Employee added successfully');
+}
     /**
      * Show the form for editing the specified resource.
      */
@@ -103,16 +89,21 @@ $request->validate([
     'phone' => 'required|numeric|digits:10',
     'department' => 'required'
 ]);
-    $employee->update([
-        'name' => $request->name,
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'department' => $request->department,
-    ]);
+    $this->employeeService->updateEmployee(
+    $employee,
+    $request->only(
+        'name',
+        'email',
+        'phone',
+        'department'
+    )
+);
+
+return redirect('/employees');
 ActivityLog::create([
     'user_id' => auth()->id(),
     'activity' => 'Updated Employee: ' . $employee->name
-]);
+]); 
     return redirect('/employees');
 }
 
