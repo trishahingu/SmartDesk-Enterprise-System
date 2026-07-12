@@ -3,40 +3,88 @@
 @section('content')
 <div class="container mx-auto p-6">
 
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold">Companies</h2>
+   <div class="d-flex justify-content-between align-items-center mb-4">
 
-        <a href="/companies/create"
-           class="bg-blue-600 text-white px-4 py-2 rounded">
-            + Add Company
-        </a>
+    <div>
+        <h2 class="fw-bold">
+            🏢 Companies
+        </h2>
+
+        <p class="text-muted mb-0">
+            Manage all companies registered in SmartDesk.
+        </p>
     </div>
 
-    <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white shadow rounded p-4">
-            <h3 class="text-gray-500">Total Companies</h3>
-            <p class="text-2xl font-bold">
-                {{ $companies->count() }}
-            </p>
-        </div>
+    <a href="{{ url('/companies/create') }}"
+       class="btn btn-primary btn-lg">
 
-        <div class="bg-white shadow rounded p-4">
-            <h3 class="text-gray-500">Free Plans</h3>
-            <p class="text-2xl font-bold">
-                {{ $companies->where('subscription_plan','Free')->count() }}
-            </p>
-        </div>
+        <i class="bi bi-plus-circle"></i> Add Company
 
-        <div class="bg-white shadow rounded p-4">
-            <h3 class="text-gray-500">Active Plans</h3>
-            <p class="text-2xl font-bold">0</p>
-        </div>
-    </div>
+    </a>
 
-    <div class="bg-white shadow rounded p-4">
 
-        <table class="table-auto w-full">
-            <thead>
+</div>
+
+    <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
+
+<h4 class="text-gray-500">
+
+Total Companies
+
+</h4>
+
+<h2 class="text-4xl font-bold mt-3 text-blue-600">
+
+{{ $companies->count() }}
+
+</h2>
+
+</div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
+
+<h4 class="text-gray-500">
+
+Free Plan
+
+</h4>
+
+<h2 class="text-4xl font-bold mt-3 text-blue-600">
+
+{{ $companies->count() }}
+
+</h2>
+
+</div>
+
+       <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
+
+<h4 class="text-gray-500">
+
+Active Plan 
+
+</h4>
+
+<h2 class="text-4xl font-bold mt-3 text-blue-600">
+
+{{ $companies->count() }}
+
+</h2>
+
+</div>
+<div class="mb-5">
+
+<input
+type="text"
+placeholder="🔍 Search Company..."
+class="w-full md:w-80 border rounded-xl p-3">
+
+</div>
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
                 <tr class="border-b">
                     <th class="text-left p-2">ID</th>
                     <th class="text-left p-2">Company Name</th>
@@ -47,13 +95,20 @@
 
             <tbody>
                 @foreach($companies as $company)
-                <tr class="border-b">
+                <tr class="hover:bg-gray-50 transition">
                     <td class="p-2">{{ $company->id }}</td>
                     <td class="p-2">{{ $company->name }}</td>
                     <td class="p-2">{{ $company->email }}</td>
                     <td class="p-2">
-                        <span class="bg-green-100 px-2 py-1 rounded">
-                            {{ $company->subscription_plan }}
+            <span
+            class="bg-green-100
+            text-green-700
+            px-3
+            py-1
+            rounded-full
+            text-sm
+            font-semibold">
+        {{ $company->subscription_plan }}
                         </span>
                     </td>
                 </tr>

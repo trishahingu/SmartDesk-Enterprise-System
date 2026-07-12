@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: smartdesk-app
+  namespace: smartdesk
+
+spec:
+  replicas: 2
+
+  strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+    
+  selector:
+    matchLabels:
+      app: smartdesk
+
+  template:
+    metadata:
+      labels:
+        app: smartdesk
+
+    spec:
+      containers:
+        - name: smartdesk
+
+          image: smartdesk:latest
+
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 10000
+
+          envFrom:
+            - configMapRef:
+                name: smartdesk-config
+
+            - secretRef:
+                name: smartdesk-secret
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 10000
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 10000
+
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

@@ -4,17 +4,48 @@
 
 <div class="container mt-4">
 
-    <h1>Edit Task</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <form action="{{ route('tasks.update', $task->id) }}"
-          method="POST">
+    <div>
 
-        @csrf
-        @method('PUT')
+        <h2 class="fw-bold">
+            ✏ Edit Task
+        </h2>
 
-        <div class="mb-3">
+        <p class="text-muted">
+            Update the task information and save the changes.
+        </p>
 
-            <label>Title</label>
+    </div>
+
+    <a href="{{ route('tasks.index') }}"
+       class="btn btn-outline-secondary">
+
+        ← Back to Tasks
+
+    </a>
+
+</div>
+        <div class="card shadow border-0">
+
+<div class="card-body p-4">
+
+<form action="{{ route('tasks.update', $task->id) }}"
+      method="POST">
+
+@csrf
+@method('PUT')
+    
+
+       <div class="row">
+
+<div class="col-md-6 mb-3">
+
+          <label class="form-label fw-semibold">
+
+Task Title
+
+</label>
 
             <input type="text"
                    name="title"
@@ -23,7 +54,7 @@
 
         </div>
 
-        <div class="mb-3">
+        <div class="col-12 mb-3">
 
             <label>Description</label>
 
@@ -134,14 +165,21 @@
            class="form-control">
 
 </div>
-        <button class="btn btn-success">
+        <div class="d-flex justify-content-end mt-4">
 
-            Update Task
+<button
+class="btn btn-primary btn-lg">
 
-        </button>
+💾 Update Task
+
+</button>
+
+</div>
 
     </form>
+</div>
 
+</div>
 </div>
 
 </x-app-layout>

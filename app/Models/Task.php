@@ -17,7 +17,10 @@ class Task extends Model
     'deadline',
     'attachment'
 ];
-
+    public function comments()
+{
+    return $this->hasMany(Comment::class);
+}
 
     public function project()
     {

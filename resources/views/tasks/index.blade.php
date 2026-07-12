@@ -4,7 +4,28 @@
 
 <div class="container mt-4">
 
-    <h1>Task List</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            📋 Task Management
+        </h2>
+
+        <p class="text-muted mb-0">
+            Manage and monitor all project tasks from one place.
+        </p>
+
+    </div>
+
+    <a href="{{ route('tasks.create') }}"
+       class="btn btn-primary btn-lg">
+
+        + Add New Task
+
+    </a>
+
+</div>
 
     <!-- Search & Filter Form -->
 
@@ -68,29 +89,27 @@
     </form>
 
     <!-- Add Task Button -->
+    
+    <div class="mb-3">
 
-    <a href="{{ route('tasks.create') }}"
-       class="btn btn-primary mb-3">
+    <a href="/tasks/pdf"
+       class="btn btn-outline-danger">
 
-       Add Task
+        📄 Export PDF
 
     </a>
-    <a href="/tasks/pdf"
-   class="btn btn-danger mb-3">
 
-   Download PDF
+    <a href="/tasks/excel"
+       class="btn btn-outline-success">
 
-</a>
+        📊 Export Excel
 
-<a href="/tasks/excel"
-   class="btn btn-success mb-3">
+    </a>
 
-   Download Excel
-
-</a>
+</div>
     <!-- Task Table -->
 
-    <table class="table table-bordered table-striped">
+    <table class="table table-hover align-middle shadow-sm bg-white rounded">
 
         <thead>
 
@@ -187,32 +206,33 @@
                 <td>{{ $task->deadline }}</td>
 
                 <!-- Actions -->
+            <td>
+        <a href="{{ route('tasks.show', $task->id) }}"
+   class="btn btn-outline-primary btn-sm">
 
-                <td>
+    👁 View
 
-                    <a href="{{ route('tasks.edit', $task->id) }}"
-                       class="btn btn-warning btn-sm">
+</a>
 
-                       Edit
+<a href="{{ route('tasks.edit', $task->id) }}"
+   class="btn btn-outline-warning btn-sm">
 
-                    </a>
+    ✏ Edit
 
-                    <form action="{{ route('tasks.destroy', $task->id) }}"
-                          method="POST"
-                          style="display:inline;">
+</a>
+    @csrf
 
-                        @csrf
-                        @method('DELETE')
+        @method('DELETE')
+<button class="btn btn-outline-danger btn-sm">
 
-                        <button class="btn btn-danger btn-sm">
+    🗑 Delete
 
-                            Delete
+</button>
+    
 
-                        </button>
+    </form>
 
-                    </form>
-
-                </td>
+</td>
 
                 <!-- Attachment -->
 

@@ -20,13 +20,52 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\PaymentController;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\Api\ProjectApiController;
+use App\Http\Controllers\Api\TaskApiController;
+use App\Http\Controllers\Api\CommentApiController;
+use App\Http\Controllers\Api\AIApiController;
 
+Route::get('/projects', [ProjectApiController::class, 'index']);
+Route::get('/tasks', [TaskApiController::class, 'index']);
+Route::get('/comments', [CommentApiController::class, 'index']);
+Route::post('/ai', [AIApiController::class, 'generate']);
+Route::get('/analytics', [AnalyticsController::class, 'index'])
+    ->middleware('auth')
+    ->name('analytics.index');
+Route::get('/activity', [ActivityController::class, 'index'])
+    ->middleware('auth')
+    ->name('activity.index');
+use App\Http\Controllers\CommentController;
+Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])
+    ->middleware('auth')
+    ->name('comments.store');
+
+Route::get('/ai', [AIController::class, 'index']);
+
+Route::post('/ai/generate', [AIController::class, 'generate']);
+Route::get('/test-log', function () {
+
+    Log::info('SmartDesk monitoring test log generated.');
+
+    return response()->json([
+        'message' => 'Log written successfully!'
+    ]);
+});
 Route::get('/payment', [PaymentController::class, 'index']);
 Route::post('/payment/success', [PaymentController::class, 'success']);
 Route::get('/companies', [CompanyController::class, 'index']);
 Route::get('/companies/create', [CompanyController::class, 'create']);
 Route::post('/companies', [CompanyController::class, 'store']);
-
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'UP',
+        'application' => 'SmartDesk',
+        'time' => now(),
+    ]);
+});
 Route::get(
     '/invoices',
     [InvoiceController::class, 'index']

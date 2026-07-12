@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: smartdesk-service
+  namespace: smartdesk
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: smartdesk
+
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 10000
