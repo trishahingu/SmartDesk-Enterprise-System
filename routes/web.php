@@ -66,15 +66,21 @@ Route::get('/health', function () {
         'time' => now(),
     ]);
 });
-Route::get(
-    '/invoices',
-    [InvoiceController::class, 'index']
-)->middleware(['auth']);
+/*
+|--------------------------------------------------------------------------
+| Invoice Routes
+|--------------------------------------------------------------------------
+*/
 
-Route::get(
-    '/invoices/generate',
-    [InvoiceController::class, 'generate']
-)->middleware(['auth']);
+Route::middleware('auth')->group(function () {
+
+    Route::get('/invoices', [InvoiceController::class, 'index'])
+        ->name('invoices.index');
+
+    Route::get('/invoice/pdf/{id}', [InvoiceController::class, 'downloadPdf'])
+        ->name('invoice.pdf');
+
+});
 Route::get('/subscriptions', [SubscriptionController::class, 'index'])
     ->middleware(['auth'])
     ->name('subscriptions.index');
@@ -209,10 +215,6 @@ Route::middleware(['auth'])->group(function () {
     );
 
 });
-Route::get(
-    '/invoice/pdf/{id}',
-    [App\Http\Controllers\InvoiceController::class, 'downloadPdf']
-);
 /*
 |--------------------------------------------------------------------------
 | Profile Routes

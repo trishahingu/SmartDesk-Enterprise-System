@@ -2,78 +2,68 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Project;
+use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\Employee;
+use App\Models\Project;
 use App\Models\Task;
-use App\Models\Attendance;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
-       public function index()
-{
-    $company = null;
+    public function index()
+    {
+        $dashboardData = Cache::remember('dashboard_stats', now()->addMinutes(10), function () {
 
-    $totalEmployees = \App\Models\Employee::count();
-    $totalUsers = \App\Models\User::count();
-    $totalTasks = \App\Models\Task::count();
-    $totalProjects = \App\Models\Project::count();
+            $totalEmployees = Employee::count();
+            $totalUsers = User::count();
+            $totalTasks = Task::count();
+            $totalProjects = Project::count();
 
-    $completedTasks = \App\Models\Task::where(
-        'status',
-        'Completed'
-    )->count();
+            $completedTasks = Task::where('status', 'Completed')->count();
 
-    $progress = $totalTasks > 0
-        ? ($completedTasks / $totalTasks) * 100
-        : 0;
+            $progress = $totalTasks > 0
+                ? ($completedTasks / $totalTasks) * 100
+                : 0;
 
-    $presentToday = \App\Models\Attendance::where(
-        'status',
-        'Present'
-    )->whereDate(
-        'attendance_date',
-        today()
-    )->count();
+            $presentToday = Attendance::where('status', 'Present')
+                ->whereDate('attendance_date', today())
+                ->count();
 
-    $absentToday = \App\Models\Attendance::where(
-        'status',
-        'Absent'
-    )->whereDate(
-        'attendance_date',
-        today()
-    )->count();
+            $absentToday = Attendance::where('status', 'Absent')
+                ->whereDate('attendance_date', today())
+                ->count();
 
-    $halfDayToday = \App\Models\Attendance::where(
-        'status',
-        'Half-Day'
-    )->whereDate(
-        'attendance_date',
-        today()
-    )->count();
+            $halfDayToday = Attendance::where('status', 'Half-Day')
+                ->whereDate('attendance_date', today())
+                ->count();
 
-    $totalAttendance = \App\Models\Attendance::count();
+            $totalAttendance = Attendance::count();
 
-    if (auth()->check() && auth()->user()->company_id) {
-        $company = \App\Models\Company::find(
-            auth()->user()->company_id
-        );
+            return compact(
+                'totalEmployees',
+                'totalUsers',
+                'totalTasks',
+                'totalProjects',
+                'completedTasks',
+                'progress',
+                'presentToday',
+                'absentToday',
+                'halfDayToday',
+                'totalAttendance'
+            );
+        });
+
+        $company = null;
+
+        if (auth()->check() && auth()->user()->company_id) {
+            $company = Company::find(auth()->user()->company_id);
+        }
+
+        return view('dashboard', array_merge(
+            ['company' => $company],
+            $dashboardData
+        ));
     }
-
-    return view('dashboard', compact(
-        'company',
-        'totalEmployees',
-        'totalUsers',
-        'totalTasks',
-        'totalProjects',
-        'completedTasks',
-        'progress',
-        'presentToday',
-        'absentToday',
-        'halfDayToday',
-        'totalAttendance'
-    ));
 }
-    }

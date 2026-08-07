@@ -5,30 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class AnalyticsController extends Controller
 {
     public function index()
     {
-        $totalProjects = Project::count();
+        $analytics = Cache::remember('analytics_dashboard', now()->addMinutes(15), function () {
 
-        $totalTasks = Task::count();
+            $totalProjects = Project::count();
 
-        $completedTasks = Task::where('status', 'Completed')->count();
+            $totalTasks = Task::count();
 
-        $pendingTasks = Task::where('status', 'Pending')->count();
+            $completedTasks = Task::where('status', 'Completed')->count();
 
-        $inProgressTasks = Task::where('status', 'In Progress')->count();
+            $pendingTasks = Task::where('status', 'Pending')->count();
 
-        $totalUsers = User::count();
+            $inProgressTasks = Task::where('status', 'In Progress')->count();
 
-        return view('analytics.index', compact(
-            'totalProjects',
-            'totalTasks',
-            'completedTasks',
-            'pendingTasks',
-            'inProgressTasks',
-            'totalUsers'
-        ));
+            $totalUsers = User::count();
+
+            return compact(
+                'totalProjects',
+                'totalTasks',
+                'completedTasks',
+                'pendingTasks',
+                'inProgressTasks',
+                'totalUsers'
+            );
+        });
+
+        return view('analytics.index', $analytics);
     }
 }

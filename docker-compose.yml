@@ -24,3 +24,4 @@ services:
     container_name: smartdesk_redis
     ports:
       - "6379:6379"
+  
